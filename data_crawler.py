@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-09 17:18:05
-LastEditTime: 2025-02-10 22:34:58
+LastEditTime: 2025-02-10 23:51:02
 '''
 import requests
 import random
@@ -130,13 +130,30 @@ def crawl_data():
         today_date = datetime.now().strftime('%Y-%m-%d')
 
         # 在文件名后加上今天的日期
-        filename = f'goods_{today_date}.txt'
-
+        filename = f'goods_{today_date}.json'
+        cnt = 0
         with open(filename, 'w', encoding='utf-8') as f:
+            f.write('{"items": [' + '\n')
             for item in items_list:
+                item['饰品涨幅'] = item.pop('minPriceChangePercent')
+                item['出租热度'] = item.pop('leaseCountChange7')
+                item['商品名称'] = item.pop('goodsName')
+                item['price'] = item['price'] / 100
+                item['商品最低价'] = item.pop('price')
+                item['leasePrice'] = item['leasePrice'] / 100
+                item['短租最低价'] = item.pop('leasePrice')
+                item['longLeasePrice'] = item['longLeasePrice'] / 100
+                item['长租最低价'] = item.pop('longLeasePrice')
+                item['商品图标'] = item.pop('iconUrl')
+                item['value'] = 19200 * item['value']
+                item['短租年化'] = item.pop('value')
+                cnt += 1
                 item_str = json.dumps(item, ensure_ascii=False, indent=2)
-                f.write(item_str + '\n\n')
-        
+                if cnt == len(items_list):
+                    f.write(item_str + '\n')
+                else:
+                    f.write(item_str + ',\n\n')
+            f.write(']}' + '\n')
         print(f"Successfully wrote {len(items_list)} items to goods.txt")
     except json.JSONDecodeError:
         print("Failed to decode JSON response")
