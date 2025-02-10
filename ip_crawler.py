@@ -1,3 +1,8 @@
+'''
+Author: yeffky
+Date: 2025-02-09 18:34:01
+LastEditTime: 2025-02-10 22:34:37
+'''
 from playwright.sync_api import sync_playwright
 import time
 import random
