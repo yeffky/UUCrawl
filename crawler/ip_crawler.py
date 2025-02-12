@@ -1,18 +1,24 @@
 '''
 Author: yeffky
 Date: 2025-02-09 18:34:01
-LastEditTime: 2025-02-10 22:34:37
+LastEditTime: 2025-02-12 16:58:04
 '''
 from playwright.sync_api import sync_playwright
 import time
 import random
 from fake_useragent import UserAgent
+import json
 
 def get_stealth_headers():
+    # 创建一个UserAgent对象，用于生成随机的用户代理字符串
     ua = UserAgent()
+    # 返回一个字典，包含用于伪装请求的HTTP头部信息
     return {
+        # 设置User-Agent头部，使用UserAgent对象生成的随机用户代理字符串
         'User-Agent': ua.random,
+        # 设置Accept-Language头部，表示客户端接受的语言，这里设置为英语
         'Accept-Language': 'en-US,en;q=0.9',
+        # 设置Referer头部，表示请求的来源页面，这里设置为快代理的网址
         'Referer': 'https://www.kuaidaili.com/'
     }
 
@@ -43,10 +49,11 @@ def scrape_with_playwright():
 
         page = context.new_page()
         
+        base_url = json.loads(open('docs/ip_crawl_config.json', 'r', encoding='utf-8').read())['base_url']
         with open('proxies.txt', 'w', encoding='utf-8') as f:
             for page_num in range(1, 101):
                 try:
-                    url = f'https://www.kuaidaili.com/free/inha/{page_num}/'
+                    url = f'{base_url}/{page_num}/'
                     
                     # 添加随机页面行为
                     page.mouse.move(

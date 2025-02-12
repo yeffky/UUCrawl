@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-09 17:18:05
-LastEditTime: 2025-02-10 23:51:02
+LastEditTime: 2025-02-12 16:57:20
 '''
 import requests
 import random
@@ -29,21 +29,29 @@ def getAuth(e):
 
 
 def get_random_proxy():
+    # 尝试打开名为 'proxies.txt' 的文件
     try:
         with open('proxies.txt', 'r') as f:
+            # 读取文件内容并按行分割成列表
             proxies = f.read().splitlines()
+            # 如果列表不为空，则随机选择一个代理并返回
             if proxies:
                 return random.choice(proxies)
+    # 如果文件不存在，则捕获 FileNotFoundError 异常并忽略
     except FileNotFoundError:
         pass
+    # 如果文件不存在或列表为空，则返回 None
     return None
 
 def remove_invalid_proxy(proxy):
+    # 尝试执行以下代码块，如果发生异常则跳转到except块
     try:
+        # 打开名为'proxies.txt'的文件，以读取模式('r')
         with open('proxies.txt', 'r') as f:
             proxies = f.read().splitlines()
         
         if proxy in proxies:
+        # 检查传入的proxy是否在proxies列表中
             proxies.remove(proxy)
         
         with open('proxies.txt', 'w') as f:
@@ -52,9 +60,10 @@ def remove_invalid_proxy(proxy):
         pass
 
 def make_request(url, payload, auth, timestamp):
+    # 创建一个UserAgent对象，用于生成随机的User-Agent字符串
     ua = UserAgent()
-    headers = {'User-Agent': 'Apifox/1.0.0 (https://apifox.com)', 'Auth': str(auth), 'Timestamp': str(timestamp), "Content-Type":"application/json",}
-    proxy = get_random_proxy()
+    headers = {'User-Agent': ua.random, 'Auth': str(auth), 'Timestamp': str(timestamp), "Content-Type":"application/json",}
+    proxy = get_random_proxy() # 获取一个随机的代理
     proxies = {'http': proxy, 'https': proxy} if proxy else None
     
     try:
@@ -80,36 +89,10 @@ def make_request(url, payload, auth, timestamp):
         return None
 
 def crawl_data():
-    base_url = "https://api-csob.ok-skins.com/api/v1/rank"
-    payload = {
-        "category": [],
-        "minPrice": 100000,
-        "minSellCount": 30,
-        "sellCountType": "DOWN",
-        "sellCountTimeRange": "WEEK",
-        "sellCountChange": 15,
-        "categoryInclude": "TRUE",
-        "exterior": [],
-        "quality": [],
-        "rarity": [],
-        "exteriorInclude": "TRUE",
-        "qualityInclude": "TRUE",
-        "rarityInclude": "TRUE",
-        "priceChangePercentTimeRange": "HALF_MONTH",
-        "container": [],
-        "containerInclude": "TRUE",
-        "nameInclude": "TRUE",
-        "leaseCountType": "DOWN",
-        "leaseCountTimeRange": "WEEK",
-        "leaseCountChange": 100,
-        "volCountTimeRange": "WEEK",
-        "volLeaseCountTimeRange": "WEEK",
-        "maxPrice": 500000,
-        "minLeaseCount": 20,
-        "maxLeaseCount": 50,
-        "type": "LEASE",
-        "page": 1
-    }
+    # 加载爬虫配置文件
+    crawal_config = json.load(open('./docs/crawl_config.json', 'r'))
+    base_url = crawal_config['base_url']  # 获取基础URL
+    payload = crawal_config['payload']  # 获取请求负载
     
     response_text = None
     while not response_text:  # Retry until the request is successful
@@ -125,14 +108,13 @@ def crawl_data():
         data = response_text
         items_list = data.get('data', {}).get('list', [])
         
-        
         # 获取今天的日期
         today_date = datetime.now().strftime('%Y-%m-%d')
 
         # 在文件名后加上今天的日期
         filename = f'goods_{today_date}.json'
         cnt = 0
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(f'data/{filename}', 'w', encoding='utf-8') as f:
             f.write('{"items": [' + '\n')
             for item in items_list:
                 item['饰品涨幅'] = item.pop('minPriceChangePercent')
