@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-09 18:34:01
-LastEditTime: 2025-02-12 16:58:04
+LastEditTime: 2025-02-15 10:53:18
 '''
 from playwright.sync_api import sync_playwright
 import time
@@ -12,14 +12,16 @@ import json
 def get_stealth_headers():
     # 创建一个UserAgent对象，用于生成随机的用户代理字符串
     ua = UserAgent()
+    referer = json.loads(open('docs/ip_crawl_config.json', 'r', encoding='utf-8').read())['referer']
+    
     # 返回一个字典，包含用于伪装请求的HTTP头部信息
     return {
         # 设置User-Agent头部，使用UserAgent对象生成的随机用户代理字符串
         'User-Agent': ua.random,
         # 设置Accept-Language头部，表示客户端接受的语言，这里设置为英语
         'Accept-Language': 'en-US,en;q=0.9',
-        # 设置Referer头部，表示请求的来源页面，这里设置为快代理的网址
-        'Referer': 'https://www.kuaidaili.com/'
+        # 设置Referer头部，表示请求的来源页面
+        'Referer': referer
     }
 
 def scrape_with_playwright():
@@ -54,7 +56,6 @@ def scrape_with_playwright():
             for page_num in range(1, 101):
                 try:
                     url = f'{base_url}/{page_num}/'
-                    
                     # 添加随机页面行为
                     page.mouse.move(
                         random.randint(0, 1920),

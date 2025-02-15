@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-11 11:17:04
-LastEditTime: 2025-02-12 17:38:40
+LastEditTime: 2025-02-14 12:06:02
 '''
 import json
 import os
@@ -10,6 +10,9 @@ from datetime import datetime
 import random
 from langchain import FAISS
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from text2vec import SentenceModel
+
+os.environ['HF_ENDPOINT'] = 'hf-mirror.com'
 
 
  # 获取今天的日期
@@ -27,6 +30,7 @@ def build_prompt(item):
         prompt = f.read()
     # 创建文本嵌入对象
     embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-zh")
+    print(1)
     # 检索知识库（扩大检索范围）
     vector_store = FAISS.load_local("./vector_store", embeddings, allow_dangerous_deserialization=True)
     retrieved_docs = vector_store.similarity_search(topic, k=5)  # 检索Top 5
@@ -49,9 +53,10 @@ def build_preset():
         preset = f.read()
     # 创建文本嵌入对象
     embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-zh")
+    print("embeddings加载完毕")
     # 检索知识库（扩大检索范围）
     vector_store = FAISS.load_local("./vector_store", embeddings, allow_dangerous_deserialization=True)
-    retrieved_docs = vector_store.similarity_search(topic, k=5)  # 检索Top 5
+    retrieved_docs = vector_store.similarity_search(topic, k=3)  # 检索Top 5
     
     # 随机选择3个不同风格的参考文案
     random.shuffle(retrieved_docs)
@@ -113,6 +118,9 @@ def get_deepseek_response(preset, prompt, api_key):
             response.raise_for_status()
             if not response.json():
                 response = None
+                print("没有收到响应，重试中...")
+            else:
+                print("收到响应，内容为：\n" + response.json()['choices'][0]['message']['content'])
         except requests.exceptions.RequestException as e:
             print(f"请求失败：{str(e)}")
             response = None
@@ -120,10 +128,10 @@ def get_deepseek_response(preset, prompt, api_key):
 
 # 4. 保存文案文件
 def save_copywriting(content):
-
+    base_path = f'./xiaohongshu_drafts/'
     filename = f"小红书_推广文案_千战系列" + today_date + ".txt"
-    
-    with open(filename, 'w', encoding='utf-8') as f:
+    print(content)
+    with open(base_path + filename, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f"文案已保存至：{filename}")
 

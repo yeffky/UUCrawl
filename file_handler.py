@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-12 13:29:31
-LastEditTime: 2025-02-12 15:15:10
+LastEditTime: 2025-02-14 11:20:18
 '''
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -11,6 +11,8 @@ from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from transformers import AutoTokenizer
 from langchain.schema import Document
+from text2vec import SentenceModel
+
 import os
 
 
@@ -42,7 +44,7 @@ def process_new_file(file_path):
     chunk_docs = [Document(page_content=chunk) for chunk in text_chunks]
 
     # 向量化并更新索引
-    embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-zh")
+    embeddings = SentenceModel('shibing624/text2vec-base-chinese')
     vector_store_dir = "./vector_store"
     if os.path.exists(vector_store_dir):
         vector_store = FAISS.load_local(vector_store_dir, embeddings, allow_dangerous_deserialization=True)
