@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-11 11:17:04
-LastEditTime: 2025-02-14 12:06:02
+LastEditTime: 2025-02-19 16:08:42
 '''
 import json
 import os
@@ -10,10 +10,8 @@ from datetime import datetime
 import random
 from langchain import FAISS
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from text2vec import SentenceModel
 
-os.environ['HF_ENDPOINT'] = 'hf-mirror.com'
-
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com/'
 
  # 获取今天的日期
 today_date = datetime.now().strftime('%Y-%m-%d')
@@ -30,7 +28,6 @@ def build_prompt(item):
         prompt = f.read()
     # 创建文本嵌入对象
     embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-zh")
-    print(1)
     # 检索知识库（扩大检索范围）
     vector_store = FAISS.load_local("./vector_store", embeddings, allow_dangerous_deserialization=True)
     retrieved_docs = vector_store.similarity_search(topic, k=5)  # 检索Top 5
@@ -41,11 +38,12 @@ def build_prompt(item):
     
     return f"""{prompt}, 
 {json.dumps(item, ensure_ascii=False, indent=2)} 
-**避免重复以下风格，做出创新**：
+**根据以下文案风格，做出创新**：
     {selected_docs}
-**创新要求**：
-    - 使用{random.choice(["轻松幽默", "专业严谨", "犀利吐槽"])}的语气
-    - 加入{["emoji表情", "热门梗", "互动提问"]}元素
+
+**注意**：
+    - 在结尾加入提示，数据截至当前日期：{today_date}
+    - 每一段内容使用 --- 进行分割
 """
 
 def build_preset():
@@ -56,7 +54,7 @@ def build_preset():
     print("embeddings加载完毕")
     # 检索知识库（扩大检索范围）
     vector_store = FAISS.load_local("./vector_store", embeddings, allow_dangerous_deserialization=True)
-    retrieved_docs = vector_store.similarity_search(topic, k=3)  # 检索Top 5
+    retrieved_docs = vector_store.similarity_search(topic, k=5)  # 检索Top 5
     
     # 随机选择3个不同风格的参考文案
     random.shuffle(retrieved_docs)
@@ -64,12 +62,10 @@ def build_preset():
 
     preset += f"""\n **主题**：{topic}
     
-    **避免重复以下风格，做出创新**：
-    {selected_docs}
-    
     **创新要求**：
     - 使用{random.choice(["轻松幽默", "专业严谨", "犀利吐槽"])}的语气
     - 加入{["emoji表情", "热门梗", "互动提问"]}元素
+    - 请不要出现除了中英文之外的语言
     """
     
     print(preset)
@@ -77,11 +73,10 @@ def build_preset():
 
 # 3. 调用Deepseek API
 def get_deepseek_response(preset, prompt, api_key):
-    url = "https://api.deepseek.com/chat/completions"
+    url = "https://api.siliconflow.cn/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
     }
     payload = json.dumps({
         "messages": [
@@ -94,27 +89,30 @@ def get_deepseek_response(preset, prompt, api_key):
                 "role": "user"
             }
         ],
-        "model": "deepseek-reasoner",
+        "model": "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
         "frequency_penalty": 0,
         "max_tokens": 2048,
         "presence_penalty": 0,
         "response_format": {
             "type": "text"
         },
+        "n": 1,
         "stop": None,
         "stream": False,
         "stream_options": None,
         "temperature": 1,
         "top_p": 1,
-        "tools": None,
-        "tool_choice": "none",
-        "logprobs": False,
-        "top_logprobs": None
+        # 硅基流动不适用字段
+        # "tools": None,
+        # "tool_choice": "none",
+        # "logprobs": False,
+        # "top_logprobs": None
     })
     response = None
     while not response:
         try:
             response = requests.post(url, data=payload, headers=headers, timeout=100)
+            # response = requests.post(url, data=payload, headers=headers)
             response.raise_for_status()
             if not response.json():
                 response = None
@@ -136,7 +134,7 @@ def save_copywriting(content):
     print(f"文案已保存至：{filename}")
 
 # 主流程
-def main():
+def analysis_data():
     # 配置参数
     API_KEY = os.getenv("DEEPSEEK_API_KEY")  # 从环境变量获取API密钥
    
@@ -160,4 +158,4 @@ def main():
         print(f"处理失败：{str(e)}")
 
 if __name__ == "__main__":
-    main()
+    analysis_data()

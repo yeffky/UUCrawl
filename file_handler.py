@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-12 13:29:31
-LastEditTime: 2025-02-14 11:20:18
+LastEditTime: 2025-02-19 13:55:28
 '''
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -11,10 +11,10 @@ from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from transformers import AutoTokenizer
 from langchain.schema import Document
-from text2vec import SentenceModel
-
+import time
 import os
 
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com/'
 
 class NewFileHandler(FileSystemEventHandler):
     def on_created(self, event):
@@ -29,14 +29,13 @@ def process_new_file(file_path):
     documents = loader.load()
     print(type(documents[0]))
 
-    headers_to_split_on = [("###", "Header"), ("####", "SubHeader")]
     # 从 Hugging Face 加载一个标记器
     tokenizer = AutoTokenizer.from_pretrained("bert-base-chinese")
     text_splitter = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
         tokenizer,
-        chunk_size=1000,
+        chunk_size=256,
         chunk_overlap=0,
-        separators=[header[0] for header in headers_to_split_on]
+        separators=['---']
     )
     # 进行文本分块
     text_chunks = text_splitter.split_text(documents[0].page_content)
@@ -44,7 +43,7 @@ def process_new_file(file_path):
     chunk_docs = [Document(page_content=chunk) for chunk in text_chunks]
 
     # 向量化并更新索引
-    embeddings = SentenceModel('shibing624/text2vec-base-chinese')
+    embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-base-zh")
     vector_store_dir = "./vector_store"
     if os.path.exists(vector_store_dir):
         vector_store = FAISS.load_local(vector_store_dir, embeddings, allow_dangerous_deserialization=True)
@@ -53,17 +52,19 @@ def process_new_file(file_path):
         vector_store = FAISS.from_documents(chunk_docs, embeddings)
     vector_store.save_local(vector_store_dir)
     
-import time
-
-observer = Observer()
-observer.schedule(NewFileHandler(), path="./xiaohongshu_drafts", recursive=False)
-observer.start()
-try:
-    while True:
-    # 每隔 1 秒检查一次
-        time.sleep(1)
-except KeyboardInterrupt:
-    # 当用户按下 Ctrl+C 时，停止观察者
-    observer.stop()
-# 等待观察者线程结束
-observer.join()
+def start_observer():
+    observer = Observer()
+    observer.schedule(NewFileHandler(), path="./xiaohongshu_drafts", recursive=False)
+    observer.start()
+    try:
+        while True:
+        # 每隔一小时检查一次
+            time.sleep(1)
+    except KeyboardInterrupt:
+        # 当用户按下 Ctrl+C 时，停止观察者
+        observer.stop()
+    # 等待观察者线程结束
+    observer.join()
+    
+if __name__ == "__main__":
+    start_observer()

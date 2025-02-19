@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-14 08:43:28
-LastEditTime: 2025-02-15 10:36:16
+LastEditTime: 2025-02-19 16:27:01
 '''
 import requests
 import json
@@ -14,7 +14,7 @@ def build_prompt(drafts):
 
 
 def get_deepseek_response(prompt, api_key):
-    url = "https://api.deepseek.com/chat/completions"
+    url = "https://api.siliconflow.cn/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {api_key}",
         'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ def get_deepseek_response(prompt, api_key):
                 "role": "user"
             }
         ],
-        "model": "deepseek-reasoner",
+        "model": "deepseek-ai/DeepSeek-R1",
         "frequency_penalty": 0,
         "max_tokens": 2048,
         "presence_penalty": 0,
@@ -39,29 +39,29 @@ def get_deepseek_response(prompt, api_key):
         "stream_options": None,
         "temperature": 1,
         "top_p": 1,
-        "tools": None,
-        "tool_choice": "none",
-        "logprobs": False,
-        "top_logprobs": None
+        # "tools": None,
+        # "tool_choice": "none",
+        # "logprobs": False,
+        # "top_logprobs": None
     })
     response = None
     while not response:
         try:
-            print(1.)
-            response = requests.post(url, data=payload, headers=headers, timeout=100)
+            print("发送请求")
+            response = requests.post(url, data=payload, headers=headers, timeout=200)
             response.raise_for_status()
             if not response.json():
                 response = None
         except requests.exceptions.RequestException as e:
-            print(f"请求失败：{str(e)}")
+            print(f"请求失败：{str(e)}，开始重试...")
             response = None
     return response.json()['choices'][0]['message']['content']
 
-if __name__ == "__main__":
+def generate_html():
     api_key = os.getenv("DEEPSEEK_API_KEY")
     today = datetime.now().strftime("%Y-%m-%d")
     
-    file_path = "./xiaohongshu_drafts/小红书_推广文案_千战系列" + "2025-02-14" +".txt"
+    file_path = "./xiaohongshu_drafts/小红书_推广文案_千战系列" + today +".txt"
     drafts = open(file_path, "r", encoding="utf-8").read()
     prompt = build_prompt(drafts=drafts)
     

@@ -24,3 +24,7 @@ requests
 fake_useragent
 hashlib
 playwright
+selenium
+watchdog
+text2vec
+sentence-transformers
