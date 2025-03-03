@@ -102,6 +102,3 @@ def crawl_ip():
                     print(f'第 {idx} 页获取到 {len(ip_list)} 条代理')
                     total += len(ip_list)
             print(f'共获取 {total} 条代理')
-
-if __name__ == '__main__':
-    main()

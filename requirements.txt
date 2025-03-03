@@ -28,3 +28,4 @@ selenium
 watchdog
 text2vec
 sentence-transformers
+webdriver_manager

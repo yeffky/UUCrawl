@@ -1,13 +1,15 @@
 '''
 Author: yeffky
 Date: 2025-02-14 09:41:09
-LastEditTime: 2025-02-19 14:31:05
+LastEditTime: 2025-02-20 09:58:15
 '''
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 import os
 import shutil
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 # 构造本地文件的URL路径
 file_path = 'D:/Project/UUCrawl/Code/pic_generate/pic.html'
@@ -29,9 +31,9 @@ def generate_pic(url):
             print(f'删除 {file_path} 失败: {e}')
     # 确保截图保存目录存在
     os.makedirs('./pictures', exist_ok=True)
-    
+    service = Service(executable_path=ChromeDriverManager().install())
     # 使用Selenium启动Chrome浏览器
-    driver = webdriver.Chrome()  # 确保ChromeDriver在PATH环境变量中
+    driver = webdriver.Chrome(service=service)  # 确保ChromeDriver在PATH环境变量中
     
     try:
         # 访问目标页面

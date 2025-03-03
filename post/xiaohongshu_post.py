@@ -1,7 +1,7 @@
 '''
 Author: yeffky
 Date: 2025-02-15 20:28:32
-LastEditTime: 2025-02-17 14:08:45
+LastEditTime: 2025-03-03 15:35:12
 '''
 import sys
 sys.path.append("./")
@@ -14,6 +14,8 @@ from utils import line_process
 import time
 import json
 import os
+import requests
+from datetime import datetime
 
 class XiaohongshuClient:
     
@@ -135,9 +137,15 @@ class XiaohongshuClient:
                     send_code_btn.click()
                 except:
                     print("无法找到发送验证码按钮")
-        
-        # 输入验证码
-        verification_code = input("请输入验证码: ")
+        is_send_code = False
+        while not is_send_code:
+            # 输入验证码
+            verification_code = requests.get("http://xx.xx.xx.xx:5628/captcha").json()['code']
+            if verification_code:
+                is_send_code = True
+            else:
+                time.sleep(5)
+                continue
         code_input = self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='验证码']")))
         code_input.clear()
         code_input.send_keys(verification_code)
@@ -239,8 +247,9 @@ def post_article():
     print("登录成功")
     print("开始发布文章")
     print(os.getcwd())
-    title = open('./xiaohongshu_drafts/小红书_推广文案_千战系列2025-02-15.txt', 'r', encoding='utf-8').readline()
-    article = line_process.get_article('./xiaohongshu_drafts/小红书_推广文案_千战系列2025-02-15.txt')
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    title = open(f'./xiaohongshu_drafts/小红书_推广文案_千战系列{today}.txt', 'r', encoding='utf-8').readline()
+    article = line_process.get_article(f'./xiaohongshu_drafts/小红书_推广文案_千战系列{today}.txt')
     print(article)
     images = os.listdir('./pictures')
     images = map(lambda x: os.path.join(r"D:\Project\UUCrawl\Code\pictures", x), images)
